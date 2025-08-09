@@ -1,0 +1,78 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>OM1 Robot Action Playground</title>
+</head>
+<body style="font-family:system-ui;margin:2rem;line-height:1.35">
+  <h1>🤖 OM1 Robot Action Playground</h1>
+
+  <form id="f">
+    <label>Task:</label><br>
+    <textarea name="task" placeholder="e.g. Pick up the red cup and say hello" style="width:100%;height:90px"></textarea><br><br>
+
+    <label>Available Actions:</label><br>
+    <label><input type="checkbox" name="actions" value="speak" checked> Speak</label><br>
+    <label><input type="checkbox" name="actions" value="move"> Move</label><br>
+    <label><input type="checkbox" name="actions" value="smile"> Smile</label><br><br>
+
+    <button>Run</button>
+  </form>
+
+  <h2 style="margin-top:24px">Sim Robot</h2>
+  <div id="stage" style="position:relative;height:140px;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden">
+    <div id="robot" style="position:absolute;left:16px;bottom:16px;font-size:48px;transition:transform 1s ease">🤖</div>
+    <div id="bubble" style="position:absolute;left:16px;bottom:80px;background:#fff;border:1px solid #ddd;border-radius:8px;padding:8px 12px;display:none;max-width:60%"></div>
+  </div>
+
+  <h2 style="margin-top:24px">Result:</h2>
+  <pre id="out" style="padding:12px;border:1px solid #ddd;background:#f9fafb;white-space:pre-wrap">No data yet.</pre>
+
+  <script>
+    const out = document.getElementById('out');
+    const robot = document.getElementById('robot');
+    const bubble = document.getElementById('bubble');
+    const stage = document.getElementById('stage');
+
+    function wait(ms){ return new Promise(r => setTimeout(r, ms)); }
+
+    async function runActions(actions){
+      bubble.style.display = 'none'; bubble.textContent = '';
+      for (const a of actions){
+        if (a.type === 'speak' && a.text){
+          bubble.textContent = a.text;
+          bubble.style.display = 'block';
+          await wait(1500);
+          bubble.style.display = 'none';
+        }
+        if (a.type === 'smile'){
+          const orig = robot.textContent;
+          robot.textContent = '😊';
+          await wait(800);
+          robot.textContent = orig;
+        }
+        if (a.type === 'move'){
+          const dist = Number(a.distance_m || 1);
+          const px = Math.max(20, Math.min(stage.clientWidth - 60, robot.offsetLeft + dist*60));
+          robot.style.transform = `translateX(${px - 16}px)`;
+          await wait(1000);
+        }
+      }
+    }
+
+    document.getElementById('f').addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const task = e.target.task.value.trim() || "Say hello";
+      const actions = [...document.querySelectorAll('input[name=actions]:checked')].map(x=>x.value);
+      const res = await fetch('/playground/run', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ task, actions })
+      });
+      let data; try { data = await res.json(); } catch(e){ data = {error:'Failed to parse', status:res.status}; }
+      out.textContent = JSON.stringify(data, null, 2);
+      if (data.actions) runActions(data.actions);
+    });
+  </script>
+</body>
+</html>
