@@ -1,3 +1,15 @@
+## Quick Start
+
+## Repository Structure
+
+robot-action-playground/ │ ├── websim/ │   ├── init.py                 # Makes websim a Python package │   ├── app.py                      # FastAPI app entry point │   └── templates/ │       └── playground.html         # Robot Action Playground UI │ ├── requirements.txt                # Project dependencies ├── README.md                       # Project documentation └── .env.example                    # Example environment variables (OM1 API key)
+
+
+
+
+
+
+
 # 🤖 Robot Action Playground
 
 A tiny web app that simulates robot actions (Speak, Move, Smile) using the **OpenMind OM1 API.** Runs locally in the browser—no physical robot required.
